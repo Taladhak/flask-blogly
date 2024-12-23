@@ -1,7 +1,7 @@
 """Models for Blogly."""
 # connect SQLAlchemy to the flask app
 from flask_sqlalchemy import SQLAlchemy
-
+import datetime
 
 
 # create a SQLAlchemy instance
@@ -23,8 +23,45 @@ class User(db.Model):
     last_name = db.Column(db.String(50), nullable=False)
     image_url = db.Column(db.String(255), nullable=False, default='https://www.freeiconspng.com/uploads/icon-user-blue-symbol-people-person-generic--public-domain--21.png') 
 
+    posts = db.relationship("Post", backref="user", cascade="all, delete-orphan")
+
+    @property
     def full_name(self):
         # return f"{self.first_name} {self.last_name}"
         return f"{self.first_name} {self.last_name}"
     
+class Post(db.Model);
+    __tablename__ = "posts"
+    id = db.column(db.Integer, primary_key=True, autoincrement=True)
+    title = db.column(db.text, nullable=False)
+    content = db.column(db.text, nullable=False)
+    created_at = db.column(
+        db.DateTime,
+        nullable=False,
+        default=datetime.datetime.now
+    )
+    #foreign key
+    user_id = db.column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+
+    @property
+    def friendly_date(self):
+        """Return nicely-formatted date."""
+        return self.created_at.strftime("%a %b %-d  %Y, %-I:%M %p")
+    
+    class PostTag(db.Model):
+        __tablename__ = "posts_tags"
+        post_id = db.column(db.Integer, db.ForeignKey('posts.id'), primary_key=True)
+        tag_id = db.column(db.Integer, db.ForeignKey('tags.id'), primary_key=True)
+
+    class Tag(db.Model):
+        __tablename__ = "tags"
+        id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+        name = db.Column(db.Text, nullable=False, unique=True)
+        
+        posts = db.relationship(
+            'Post',
+            secondary="posts_tags",
+            # cascade="all,delete",
+            backref="tags",
+        )
     
